@@ -26,57 +26,77 @@ var can_y = 10;
 var cur_box = [];
 var cur_loc = [];
 
+//variables for user level and score
+var level;
+var cur_score;
+
+
 $(window).load(function() {
   //init our canvas and everything else on window load
   main_canvas = document.getElementById('board-canvas');
 
   if (main_canvas.getContext) {
+    //make sure we can getContext before continuing
     g_canvas = new Match_canvas(main_canvas, box_width, box_height, can_x, can_y);
 
     g_canvas.draw_canvas();
-  }
 
-  $(main_canvas).mousedown(function(event) {
-    //get the current mouse event xy
-    m_loc[0] = event.offsetX;
-    m_loc[1] = event.offsetY;
-    //determine the current box
-    figure_box(m_loc[0],m_loc[1]);
+    $(main_canvas).mousedown(function(event) {
+      //get the current mouse event xy
+      m_loc[0] = event.offsetX;
+      m_loc[1] = event.offsetY;
+      //determine the current box, sets cur_box to the 0,0 point of the box based on m_loc, so we can determine the change in box instead of just the change in x/y
+      figure_box(m_loc[0],m_loc[1]);
 
-    //mousedown prevents mousemove events from firing without a pressed mouse
-    mouse_down = true;
-  });
-  $(main_canvas).mouseup(function(event) {
-    //reset the mousedown and movement variables
-    mouse_down = false;
-    if (box_move == 1 || box_move == 3) {
-      g_canvas.snap_column(cur_box[0],cur_loc[1]);
-    } else if (box_move == 2 || box_move ==4) {
-      g_canvas.snap_row(cur_box[1],cur_loc[0]);
-    }
-    box_move = 0;
+      //mousedown prevents mousemove events from firing without a pressed mouse
+      mouse_down = true;
+    });
 
-    g_canvas.set_matches();
-    if(g_canvas.has_matches) {
-      animate_drops();
-    }
-  });
+    $(main_canvas).mouseup(function(event) {
+      //reset the mousedown and movement variables
+      mouse_down = false;
+      var snap_move = false;
 
-  $(main_canvas).mousemove(function(event) {
-    //bind the mousemove event to figure when the mouse is being dragged
-    if(mouse_down) {
-      cur_loc = [];
-      cur_loc[0] = -(m_loc[0] - event.offsetX);
-      cur_loc[1] = -(m_loc[1] - event.offsetY);
-
-      if(box_move == 0) {
-        figure_box_move(cur_loc[0],cur_loc[1]);
+      //snap the columns or rows
+      if (box_move == 1 || box_move == 3) {
+        snap_move = g_canvas.snap_column(cur_box[0],cur_loc[1]);
+      } else if (box_move == 2 || box_move ==4) {
+        snap_move = g_canvas.snap_row(cur_box[1],cur_loc[0]);
       }
 
-      g_canvas.draw_drag(cur_box[0], cur_box[1], box_move, cur_loc[0], cur_loc[1]);
+      //reset the movement direction snap variable
+      box_move = 0;
 
-    }
-  });
+      //if we've moved less than a single box, don't figure matches
+      if(!less_than_single_box() || snap_move) {
+        g_canvas.set_matches();
+        if(g_canvas.has_matches) {
+          g_canvas.has_matches = false;
+          animate_drops();
+        }
+      }
+
+    });
+
+    $(main_canvas).mousemove(function(event) {
+      //bind the mousemove event to figure when the mouse is being dragged
+      if(mouse_down) {
+        //cur_loc is the current location of the mouse, used to figure the change from cur_box, which is the x,y of the initial point
+        cur_loc = [];
+        cur_loc[0] = -(m_loc[0] - event.offsetX);
+        cur_loc[1] = -(m_loc[1] - event.offsetY);
+
+        if(box_move == 0) {
+          figure_box_move(cur_loc[0],cur_loc[1]);
+        }
+
+        g_canvas.draw_drag(cur_box[0], cur_box[1], box_move, cur_loc[0], cur_loc[1]);
+
+      }
+    });
+
+  }
+
 });
 
 /**
@@ -93,7 +113,7 @@ function animate_drops() {
 
     //check to see if there are still blank blocks
     still_fill = g_canvas.needs_fill();
-    g_canvas.draw_drops();
+//    g_canvas.draw_drops();
   }
 
 
@@ -101,20 +121,21 @@ function animate_drops() {
   if(still_fill) {
     var t = setTimeout('animate_drops()',10);
   } else {
-    g_canvas.clear_canvas();
-    g_canvas.draw_canvas();
+    g_canvas.set_matches();
+    if(g_canvas.has_matches) {
+      g_canvas.has_matches = false;
+      animate_drops();
+    }
   }
 }
 
 /**
  * boxes have moved less than a single box wide or high
- * @param x
- * @param y
  * @return {Boolean}
  */
-function less_than_single_box(x,y) {
-  var tot_x = Math.abs(x);
-  var tot_y = Math.abs(y);
+function less_than_single_box() {
+  var tot_x = Math.abs((cur_box[0]*box_width) - cur_loc[0]);
+  var tot_y = Math.abs((cur_box[1]*box_height) - cur_loc[1]);
   return tot_x < (box_width + 1) && tot_y < (box_height + 1);
 }
 

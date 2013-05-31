@@ -7,8 +7,8 @@
  * @param sq_high
  */
 function Match_canvas(main_canvas, box_width, box_height, sq_across, sq_high) {
-  this.main_canvas = main_canvas;
   this.canvas = main_canvas.getContext('2d');
+  this.sprites = document.getElementById('sprites');
 
   //set up the parts of the canvas
   this.b_width = box_width;
@@ -21,7 +21,7 @@ function Match_canvas(main_canvas, box_width, box_height, sq_across, sq_high) {
   this.values = [];
   this.temp_vals = [];
 
-  this.color_vals = 10;
+  this.color_vals = 12;
 
   this.has_matches = false;
   this.anim_level = 0;
@@ -40,13 +40,16 @@ Match_canvas.prototype.init = function(){
       this.values[x][y] = Math.round(Math.random()*(this.color_vals-1));
     }
   }
+  this.clear_canvas();
 };
 
 /**
  * clear the canvas
  */
 Match_canvas.prototype.clear_canvas = function() {
-  this.canvas.clearRect(0,0,this.tot_width,this.tot_height);
+//  this.canvas.clearRect(0,0,this.tot_width,this.tot_height);
+  this.canvas.fillStyle = "black";
+  this.canvas.fillRect(0, 0, this.tot_width, this.tot_height);
 };
 
 /**
@@ -56,6 +59,7 @@ Match_canvas.prototype.draw_canvas = function() {
   var x; var y;
   for(x=0; x<this.across; x++) {
     for(y=0; y<this.high; y++) {
+      this.draw_background(x,y);
       this.draw_box(x,y,0,0);
     }
   }
@@ -69,8 +73,16 @@ Match_canvas.prototype.draw_canvas = function() {
  * @param offset_y
  */
 Match_canvas.prototype.draw_box = function(x,y,offset_x,offset_y) {
-  this.canvas.fillStyle = return_color_for_value(this.values[x][y]);
-  this.canvas.fillRect((this.b_width*x)+offset_x,(this.b_height*y)+offset_y,this.b_width,this.b_height);
+  this.canvas.drawImage(this.sprites, (this.values[x][y]+1)*60, 0, 60, 60, (this.b_width*x)+offset_x, (this.b_height*y)+offset_y, this.b_width, this.b_height);
+};
+
+/**
+ * draw the background tiles
+ * @param x
+ * @param y
+ */
+Match_canvas.prototype.draw_background = function(x,y) {
+  this.canvas.drawImage(this.sprites, 0, 0, 60, 60, (this.b_width*x), (this.b_height*y), this.b_width, this.b_height);
 };
 
 /**
@@ -131,7 +143,13 @@ Match_canvas.prototype.draw_drag = function(box_x, box_y, drag_direction, offset
 Match_canvas.prototype.draw_row = function(row, offset, should_clear) {
   var x;
   if(should_clear == true) {
-    this.canvas.clearRect(0,row*this.b_height,this.tot_width,this.b_height);
+    this.canvas.fillStyle = "black";
+    this.canvas.fillRect(0,row*this.b_height,this.tot_width,this.b_height);
+
+    //draw the background
+    for(x=0; x<this.across; x++) {
+      this.draw_background(x,row);
+    }
   }
 
   for(x=0; x<this.across; x++) {
@@ -148,7 +166,13 @@ Match_canvas.prototype.draw_row = function(row, offset, should_clear) {
 Match_canvas.prototype.draw_column = function(column, offset, should_clear) {
   var y;
   if(should_clear == true) {
-    this.canvas.clearRect(column*this.b_width,0,this.b_width,this.tot_height);
+    this.canvas.fillStyle = "black";
+    this.canvas.fillRect(column*this.b_width,0,this.b_width,this.tot_height);
+
+    //draw the background
+    for(y=0; y<this.high; y++) {
+      this.draw_background(column,y);
+    }
   }
 
   for(y=0; y<this.high; y++) {
@@ -165,13 +189,21 @@ Match_canvas.prototype.draw_column = function(column, offset, should_clear) {
  */
 Match_canvas.prototype.draw_partial_column = function(column, start, num_boxes, offset) {
   var y;
-  this.canvas.clearRect(column*this.b_width,start*this.b_height,this.b_width,num_boxes*this.b_height);
+  this.canvas.fillStyle = "black";
+  this.canvas.fillRect(column*this.b_width,start*this.b_height,this.b_width,num_boxes*this.b_height);
+
+  for(y=start; y<(start+num_boxes); y++) {
+    this.draw_background(column,y);
+  }
 
   for(y=start; y<(start+num_boxes); y++) {
     this.draw_box(column,y,0,offset);
   }
 };
 
+/**
+ * draw the dropping tiles
+ */
 Match_canvas.prototype.draw_drops = function() {
   var x; var y;
   for(x=0; x<this.across; x++) {
@@ -261,6 +293,8 @@ Match_canvas.prototype.snap_row = function(row, offset) {
 
   this.clear_canvas();
   this.draw_canvas();
+
+  return move_amount > 0;
 };
 
 /**
@@ -292,6 +326,8 @@ Match_canvas.prototype.snap_column = function(column, offset) {
 
   this.clear_canvas();
   this.draw_canvas();
+
+  return move_amount > 0;
 };
 
 
@@ -311,6 +347,7 @@ Match_canvas.prototype.set_matches = function() {
       var block_val = this.temp_vals[x][y];
       var like_val = this.return_like_values_from_point(x,y,block_val);
       if(like_val > 2) {
+        //@todo add handling for scoring, etc. here
         //set blocks of three or more to -1
         this.clone_values(this.values, this.temp_vals);
 
@@ -389,21 +426,3 @@ Match_canvas.prototype.return_like_values_from_point = function(x,y, box_val) {
 
   return ret_val;
 };
-
-/**
- * return a color from a color value
- * @param c_value
- * @return string
- */
-function return_color_for_value(c_value) {
-  if(c_value == -1) {
-    //return white for blank values
-    return 'rgba(255,255,255,1)';
-  }
-  ret_val = 'rgba(';
-  ret_val+= (25*c_value)+','+(25*c_value)+','+(25*c_value);
-
-  ret_val+= ',1)';
-
-  return ret_val;
-}
