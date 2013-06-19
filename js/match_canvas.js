@@ -6,7 +6,11 @@
  * @param sq_across
  * @param sq_high
  */
-function Match_canvas(main_canvas, box_width, box_height, sq_across, sq_high) {
+
+//this is the "infill" value, what the app replaces blank tiles with, in this case the 5-fingered hand
+var kINFILL_VAL = 12;
+
+function Match_canvas(main_canvas, box_width, box_height, sq_across, sq_high, game_type) {
   this.canvas = main_canvas.getContext('2d');
   this.sprites = document.getElementById('sprites');
 
@@ -25,6 +29,8 @@ function Match_canvas(main_canvas, box_width, box_height, sq_across, sq_high) {
 
   this.has_matches = false;
   this.anim_level = 0;
+
+  this.game_type = game_type;
 
   this.init();
 }
@@ -99,36 +105,36 @@ Match_canvas.prototype.draw_drag = function(box_x, box_y, drag_direction, offset
       //dragging up
       this.draw_column(box_x, offset_y, true);
       if(offset_y < 0) {
-        this.draw_column(box_x, offset_y+600, false);
+        this.draw_column(box_x, offset_y+this.tot_height, false);
       } else {
-        this.draw_column(box_x, offset_y-600, false);
+        this.draw_column(box_x, offset_y-this.tot_height, false);
       }
       break;
     case 2:
       //dragging right
       this.draw_row(box_y, offset_x, true);
       if(offset_x > 0) {
-        this.draw_row(box_y, offset_x-600, false);
+        this.draw_row(box_y, offset_x-this.tot_width, false);
       } else {
-        this.draw_row(box_y, offset_x+600, false);
+        this.draw_row(box_y, offset_x+this.tot_width, false);
       }
       break;
     case 3:
       //dragging down
       this.draw_column(box_x, offset_y, true);
       if(offset_y > 0 ) {
-        this.draw_column(box_x, offset_y-600, false);
+        this.draw_column(box_x, offset_y-this.tot_height, false);
       } else {
-        this.draw_column(box_x, offset_y+600, false);
+        this.draw_column(box_x, offset_y+this.tot_height, false);
       }
       break;
     case 4:
       //dragging left
       this.draw_row(box_y, offset_x, true);
       if(offset_x < 0) {
-        this.draw_row(box_y, offset_x+600, false);
+        this.draw_row(box_y, offset_x+this.tot_width, false);
       } else {
-        this.draw_row(box_y, offset_x-600, false);
+        this.draw_row(box_y, offset_x-this.tot_width, false);
       }
       break;
   }
@@ -241,7 +247,13 @@ Match_canvas.prototype.infill_blocks = function() {
   var x;
   for(x=0; x<this.across; x++) {
     if(this.values[x][0] == -1) {
-      this.values[x][0] = Math.round(Math.random()*(this.color_vals-1));
+      if(this.game_type[kGAME_CLEAR_BOARD]) {
+        //this game clears the board
+        this.values[x][0] = kINFILL_VAL;
+      } else {
+        //this game replaces the cleared pieces
+        this.values[x][0] = Math.round(Math.random()*(this.color_vals-1));
+      }
     }
   }
 };
@@ -389,6 +401,11 @@ Match_canvas.prototype.clone_values = function(array_a, array_b) {
  */
 Match_canvas.prototype.return_like_values_from_point = function(x,y, box_val) {
   var ret_val = 0;
+
+  if(this.temp_vals[x][y] >= kINFILL_VAL) {
+    //this is a holder value, don't count it
+    return 0;
+  }
 
   if(this.temp_vals[x][y] > -1) {
     //set this block to -1 so it isn't counted twice. The return value starts at 1, since it includes this block

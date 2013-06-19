@@ -7,6 +7,9 @@
  * 1/30/12
  */
 
+//define constants for the game_type array
+var kGAME_CLEAR_BOARD = 0;
+
 var g_canvas;
 var main_canvas;
 
@@ -26,18 +29,22 @@ var can_y = 10;
 var cur_box = [];
 var cur_loc = [];
 
-//variables for user level and score
+//game variables
 var level;
 var cur_score;
+var game_type = [];
 
 
 $(window).load(function() {
   //init our canvas and everything else on window load
   main_canvas = document.getElementById('board-canvas');
 
+  //set the game clear flag (0 is clear the board, 1 is board refils)
+  game_type[kGAME_CLEAR_BOARD] = false;
+
   if (main_canvas.getContext) {
     //make sure we can getContext before continuing
-    g_canvas = new Match_canvas(main_canvas, box_width, box_height, can_x, can_y);
+    g_canvas = new Match_canvas(main_canvas, box_width, box_height, can_x, can_y, game_type);
 
     g_canvas.draw_canvas();
 
@@ -73,6 +80,9 @@ $(window).load(function() {
         if(g_canvas.has_matches) {
           g_canvas.has_matches = false;
           animate_drops();
+        } else {
+          //do end of turn processing here
+          handle_end_of_turn();
         }
       }
 
@@ -95,6 +105,9 @@ $(window).load(function() {
       }
     });
 
+  } else {
+    //umm... something is wrong. So wrong.
+    alert('Can not get canvas context. Something has become seriously borked. Please send help.');
   }
 
 });
@@ -113,7 +126,6 @@ function animate_drops() {
 
     //check to see if there are still blank blocks
     still_fill = g_canvas.needs_fill();
-//    g_canvas.draw_drops();
   }
 
 
@@ -125,6 +137,9 @@ function animate_drops() {
     if(g_canvas.has_matches) {
       g_canvas.has_matches = false;
       animate_drops();
+    } else {
+      //we're finally done with all the matches, do any post-match processing here
+      handle_end_of_turn();
     }
   }
 }
@@ -178,4 +193,13 @@ function figure_box_move(x,y) {
       box_move = 1;
     }
   }
+}
+
+/**
+ * processing for the end of turn
+ * called from animate_drops after all matches and drops have been calculated
+ * called from main_canvas.mouseup in window.load if no matches exist and move has been made
+ */
+function handle_end_of_turn() {
+
 }
