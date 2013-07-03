@@ -9,6 +9,7 @@
 
 //define constants for the game_type array
 var kGAME_CLEAR_BOARD = 0;
+var kGAME_AGE_HANDS = 2;
 
 var g_canvas;
 var main_canvas;
@@ -33,14 +34,17 @@ var cur_loc = [];
 var level;
 var cur_score;
 var game_type = [];
-
+var age_turn;
 
 $(window).load(function() {
   //init our canvas and everything else on window load
   main_canvas = document.getElementById('board-canvas');
 
   //set the game clear flag (0 is clear the board, 1 is board refils)
-  game_type[kGAME_CLEAR_BOARD] = false;
+  game_type[kGAME_CLEAR_BOARD] = true;
+  game_type[kGAME_AGE_HANDS] = true;
+
+  age_turn = 0;
 
   if (main_canvas.getContext) {
     //make sure we can getContext before continuing
@@ -81,8 +85,7 @@ $(window).load(function() {
           g_canvas.has_matches = false;
           animate_drops();
         } else {
-          //do end of turn processing here
-          handle_end_of_turn();
+          //do end of mousedown turn processing here
         }
       }
 
@@ -201,5 +204,8 @@ function figure_box_move(x,y) {
  * called from main_canvas.mouseup in window.load if no matches exist and move has been made
  */
 function handle_end_of_turn() {
+  if(g_canvas.game_type[kGAME_AGE_HANDS]) {
+    g_canvas.age_canvas();
 
+  }
 }

@@ -7,6 +7,28 @@
  * Mojiferous
  */
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Applications\/MAMP\/htdocs\/spongium\/sass\/main\.scss}line{font-family:\0000311}}
+body {
+  background-color: #666666;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Applications\/MAMP\/htdocs\/spongium\/sass\/main\.scss}line{font-family:\0000314}}
+a {
+  color: #aaaaaa;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Applications\/MAMP\/htdocs\/spongium\/sass\/main\.scss}line{font-family:\0000318}}
 .hidden {
   display: none;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Applications\/MAMP\/htdocs\/spongium\/sass\/main\.scss}line{font-family:\0000322}}
+.game-desc {
+  max-width: 50%;
+  padding-left: 20px;
+  float: left;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Applications\/MAMP\/htdocs\/spongium\/sass\/main\.scss}line{font-family:\0000328}}
+.board-body {
+  float: left;
 }

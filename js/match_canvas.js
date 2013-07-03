@@ -252,10 +252,19 @@ Match_canvas.prototype.infill_blocks = function() {
         this.values[x][0] = kINFILL_VAL;
       } else {
         //this game replaces the cleared pieces
-        this.values[x][0] = Math.round(Math.random()*(this.color_vals-1));
+        this.infill_random_block(x, 0);
       }
     }
   }
+};
+
+/**
+ * sets the block at x,y to a random block
+ * @param x
+ * @param y
+ */
+Match_canvas.prototype.infill_random_block = function(x, y) {
+  this.values[x][y] = Math.round(Math.random()*(this.color_vals-1));
 };
 
 /**
@@ -369,6 +378,41 @@ Match_canvas.prototype.set_matches = function() {
   }
 
   //clear and redraw
+  this.clear_canvas();
+  this.draw_canvas();
+};
+
+/**
+ * age the hand blocks across the board
+ * @param age_all
+ */
+Match_canvas.prototype.age_canvas = function(age_all) {
+  var x; var y;
+
+  for(x=0; x<this.across; x++) {
+    for(y=0; y<this.high; y++) {
+      var this_val = this.values[x][y];
+      var should_age = false;
+
+      //age hands, if applicable
+      if(this.game_type[kGAME_AGE_HANDS]) {
+        if(this_val > 11 && this_val < 16) should_age = true;
+      }
+
+      //this is a five-hand block, turn it into something new
+      if(this_val == 16) {
+        this.infill_random_block(x, y);
+      }
+
+      //yes, this block should age
+      if(should_age) {
+        this.values[x][y]++;
+      }
+
+
+    }
+  }
+
   this.clear_canvas();
   this.draw_canvas();
 };
